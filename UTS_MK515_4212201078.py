@@ -9,12 +9,13 @@ from mlxtend.plotting import plot_confusion_matrix
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
+from sklearn.model_selection import LeaveOneOut
 
 # Load the dataset (replace with your actual file path)
 train_data = pd.read_csv('../archive (7)/emnist-bymerge-train2.csv', header=None)
 test_data = pd.read_csv('../archive (7)/emnist-bymerge-test.csv', header=None)
-l = train_data[0].head(10000)
-d = train_data.drop(0, axis=1).head(10000)
+l = train_data[0].head(4000)
+d = train_data.drop(0, axis=1).head(4000)
 lt = test_data[0].head(4000)
 dt = test_data.drop(0, axis=1).head(4000)
 
@@ -52,6 +53,46 @@ y_test = lt.values
 
 
 clf_svm = make_pipeline(StandardScaler(), SVC(kernel='rbf', probability=True,C=6,gamma='scale',cache_size=1000,degree=5))
+
+
+loo = LeaveOneOut()
+loo_true1 = []
+loo_pred1 = []
+a=0
+for train_index, test_index in loo.split(hog_features_train):
+    X_train, X_test = hog_features_train[train_index], hog_features_train[test_index]
+    y_train_split, y_test_split = y_train[train_index], y_train[test_index]
+
+    # Train the SVM classifier
+    clf_svm.fit(X_train, y_train_split)
+    loo_true1.append(y_test_split[0])
+    loo_pred1.append(clf_svm.predict(X_test)[0])
+
+
+loo_true = np.array(loo_true1)
+loo_pred = np.array(loo_pred1)
+
+print("")
+print("")
+print(loo_true)
+print("")
+print(loo_pred)
+
+conf_mat_svm = confusion_matrix(loo_true, loo_pred)
+print('LOOCV Confusion Matrix:\n', conf_mat_svm)
+
+fig, ax = plot_confusion_matrix(conf_mat=conf_mat_svm, class_names=class_namess)
+plt.title('LOOCV Confusion Matrix')
+plt.show()
+
+precision_svm = precision_score(loo_true, loo_pred, average=None)
+recall_svm = recall_score(loo_true, loo_pred, average=None)
+accuracy_svm = accuracy_score(loo_true, loo_pred)
+f1_svm = f1_score(loo_true, loo_pred, average='macro')
+print(f'SVM Precision: {precision_svm}, Recall: {recall_svm}, Accuracy: {accuracy_svm}, F1 Score: {f1_svm}')
+
+
+
 #clf_svm = SVC(kernel='rbf', probability=True,C=1,gamma='auto',cache_size=1000,)
 clf_svm.fit(hog_features_train_scaled, y_train)
 
