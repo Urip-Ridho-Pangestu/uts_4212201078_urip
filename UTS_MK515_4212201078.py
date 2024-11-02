@@ -67,6 +67,8 @@ for train_index, test_index in loo.split(hog_features_train):
     clf_svm.fit(X_train, y_train_split)
     loo_true1.append(y_test_split[0])
     loo_pred1.append(clf_svm.predict(X_test)[0])
+    print(y_test_split.shape)
+    print(y_train_split.shape)
 
 
 loo_true = np.array(loo_true1)
